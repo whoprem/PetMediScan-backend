@@ -62,19 +62,15 @@ app.post("/analyze", upload.single("image"), async (req, res) => {
     const { symptom } = req.body;
     const { lat, lon } = req.query;
 
-    let aiRes;
+    let diagnosis = "example diagnosis";
+    let medicine = "Paracetamol";
 
-    if (req.file) {
-      aiRes = await axios.post("http://localhost:8000/image-diagnose", {
-        imagePath: req.file.path,
-      });
-    } else if (symptom) {
-      aiRes = await axios.post("http://localhost:8000/symptom-diagnose", {
-        symptom,
-      });
+    // Simulate AI response
+    if (symptom) {
+      // You can replace this with a real AI API later
+      diagnosis = "Detected issue based on: " + symptom;
+      medicine = "SampleMedicine for " + symptom;
     }
-
-    const { diagnosis, medicine } = aiRes.data;
 
     const nearbyShops = await Shop.find({
       "medicines.name": medicine,
@@ -86,16 +82,26 @@ app.post("/analyze", upload.single("image"), async (req, res) => {
       },
     });
 
+    const shopList = nearbyShops.map((shop) => ({
+      _id: shop._id,
+      name: shop.name,
+      address: shop.address,
+    }));
+
     res.json({
-      diagnosis,
-      medicine,
-      shops: nearbyShops,
+      diagnosis : "fever",
+      medicine: "paracetamol",
+      shops:  nearbyShops.length > 0 ? nearbyShops : [
+        { _id: "1", name: "City Pharmacy", address: "Main St" },
+        { _id: "2", name: "HealthPlus", address: "Market Rd" }
+      ]
     });
   } catch (error) {
     console.error("Error during analysis:", error);
     res.status(500).json({ error: "Something went wrong!" });
   }
 });
+
 
 
 app.listen(5000,'0.0.0.0', () => console.log("Server running on port 5000"));
